@@ -5,7 +5,7 @@ Author URI: http://novaksolutions.com/
 Plugin URI: http://novaksolutions.com/wordpress-plugins/infusionsoft-one-click-upsell/
 Requires at least: 2.7
 Tested up to: 3.8.1
-Stable tag: 1.1.3
+Stable tag: 1.1.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -26,6 +26,9 @@ Once the customer clicks the upsell button, One-click Upsell will charge the cus
 Yes, you will need to provide your Infusionsoft API key.
 
 == Changelog ==
+
+= 1.1.4 =
+* Fix missing parameter for Infusionsoft_InvoiceService::addOrderItem call
 
 = 1.1.3 =
 * Only pull credit card ID (grabbing more can cause failures)

@@ -66,7 +66,7 @@ function novaksolutions_process_upsell(){
 
                 $invoiceId = Infusionsoft_InvoiceService::createBlankOrder($contact_id, 'Upsell - ' . $product->ProductName, date('Ymd') . 'T00:00:00', $lead_affiliate_id, $sale_affiliate_id);
 
-                Infusionsoft_InvoiceService::addOrderItem($invoiceId, $product_id, 4, $product->ProductPrice, $quantity, $product->ProductName);
+                Infusionsoft_InvoiceService::addOrderItem($invoiceId, $product_id, 4, $product->ProductPrice, $quantity, $product->ProductName, $product->ProductName);
 
 
                 $amountOwed = Infusionsoft_InvoiceService::calculateAmountOwed($invoiceId);
