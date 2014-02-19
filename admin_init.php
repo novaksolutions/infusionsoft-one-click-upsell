@@ -98,8 +98,12 @@ function novaksolutions_upsell_callback_function_default_failure_url() {
 }
 
 function novaksolutions_upsell_callback_function_merchantaccount_id() {
+    $merchantId = novaksolutions_upsell_get_merchant_accounts();
     echo '<input type="text" name="novaksolutions_upsell_merchantaccount_id" value="' . get_option('novaksolutions_upsell_merchantaccount_id') . '" /><br />';
-    echo '<span class="description">This merchant account will be used when processing upsell orders. To find your merchant account ID, open Infusionsoft and go to E-Commerce&rarr;Settings&rarr;Merchant Accounts. The account ID will be listed after "ID=" in the edit URL for the merchant account you\'d like to use.</span>';
+    if($merchantId !== false) {
+        echo '<p><span class="description">Based on your Infusionsoft account history, this should probably be set to: <strong>'.$merchantId.'</strong></span></p>';
+    }
+    echo '<p><span class="description">This merchant account will be used when processing upsell orders. To find your merchant account ID, open Infusionsoft and go to E-Commerce&rarr;Settings&rarr;Merchant Accounts. The account ID will be listed after "ID=" in the edit URL for the merchant account you\'d like to use.</span></p>';
 }
 
 function novaksolutions_upsell_callback_function_test_merchantaccount_id() {
@@ -122,6 +126,31 @@ function novaksolutions_upsell_add_admin_menu(){
     add_submenu_page( "novaksolutions_upsell_admin_menu", "Infusionsoft® One-click Upsell", "Settings", "edit_plugins", "novaksolutions_upsell_admin_menu", 'novaksolutions_upsell_display_admin_page');
     add_submenu_page( "novaksolutions_upsell_admin_menu", "One-click Upsell Usage Instructions", "Usage", "edit_posts", "novaksolutions_upsell_usage", "novaksolutions_upsell_display_usage");
     add_submenu_page( "novaksolutions_upsell_admin_menu", "Product Upsell Links", "Product Upsell Links", "edit_posts", "novaksolutions_upsell_product_links", "novaksolutions_upsell_display_product_links");
+}
+
+function novaksolutions_upsell_get_merchant_accounts(){
+    // Check if SDK plugin is active
+    if( !is_plugin_active( 'infusionsoft-sdk/infusionsoft-sdk.php' ) || !get_option('infusionsoft_sdk_app_name') || !get_option('infusionsoft_sdk_api_key')){
+        return false;
+    }
+
+    // Find out what merchant ID was used recently so it can be suggested to the user.
+    try{
+        Infusionsoft_AppPool::addApp(new Infusionsoft_App(get_option('infusionsoft_sdk_app_name') . '.infusionsoft.com', get_option('infusionsoft_sdk_api_key')));
+        $merchants = Infusionsoft_DataService::queryWithOrderBy(new Infusionsoft_CCharge(), array('MerchantId' => '%'), 'MerchantId', false, 100, 0, array('MerchantId'));
+        $m = array();
+        foreach($merchants as $merchant) {
+            if(!isset($m[$merchant->MerchantId])) $m[$merchant->MerchantId] = 0;
+            $m[$merchant->MerchantId]++;
+        }
+
+        if(!empty($m)){
+            $max = array_keys($m, max($m));
+            return $max[0];
+        }
+    } catch(Infusionsoft_Exception $e) {
+        return false;
+    }    
 }
 
 function novaksolutions_upsell_get_products(){
