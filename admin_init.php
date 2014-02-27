@@ -6,6 +6,7 @@ add_action('admin_init', 'novaksolutions_admin_init');
 function novaksolutions_upsell_plugin_action_links( $links, $file ) {
     if ( $file == plugin_basename( dirname(__FILE__).'/infusionsoft-one-click-upsell.php' ) ) {
         $links[] = '<a href="' . admin_url( 'admin.php?page=novaksolutions_upsell_admin_menu' ) . '">'.__( 'Settings' ).'</a>';
+        $links[] = '<a href="http://novaksolutions.com/integrations/wordpress/?utm_source=wordpress&utm_medium=link&utm_content=upsell&utm_campaign=more-plugins">More Plugins by Novak Solutions</a>';
     }
 
     return $links;
@@ -18,6 +19,7 @@ function novaksolutions_admin_init(){
     register_setting('novaksolutions_upsell', 'novaksolutions_upsell_merchantaccount_id');
     register_setting('novaksolutions_upsell', 'novaksolutions_upsell_test_merchantaccount_id');
     register_setting('novaksolutions_upsell', 'novaksolutions_upsell_default_action_set_id');
+    register_setting('novaksolutions_upsell', 'novaksolutions_upsell_default_id');
     register_setting('novaksolutions_upsell', 'novaksolutions_upsell_default_class');
 
     // Add the section to reading settings so we can add our
@@ -64,8 +66,14 @@ function novaksolutions_admin_init(){
         'novaksolutions-upsell-settings',
         'novaksolutions_upsell_setting_section_defaults');
 
+    add_settings_field('novaksolutions_upsell_default_id',
+        'Default Button CSS ID',
+        'novaksolutions_upsell_callback_function_default_id',
+        'novaksolutions-upsell-settings',
+        'novaksolutions_upsell_setting_section_defaults');
+
     add_settings_field('novaksolutions_upsell_default_class',
-        'Default Button Class',
+        'Default Button CSS Class',
         'novaksolutions_upsell_callback_function_default_class',
         'novaksolutions-upsell-settings',
         'novaksolutions_upsell_setting_section_defaults');
@@ -78,6 +86,7 @@ function novaksolutions_admin_init(){
     register_setting('novaksolutions-upsell-settings', 'novaksolutions_upsell_default_success_url', 'esc_url');
     register_setting('novaksolutions-upsell-settings', 'novaksolutions_upsell_default_failure_url', 'esc_url');
     register_setting('novaksolutions-upsell-settings', 'novaksolutions_upsell_default_action_set_id', 'novaksolutions_upsell_sanitize_absint');
+    register_setting('novaksolutions-upsell-settings', 'novaksolutions_upsell_default_id', 'sanitize_html_class');
     register_setting('novaksolutions-upsell-settings', 'novaksolutions_upsell_default_class', 'sanitize_html_class');
 
 }
@@ -89,12 +98,12 @@ function novaksolutions_upsell_sanitize_absint($value) {
 
 function novaksolutions_upsell_callback_function_default_success_url() {
     echo '<input type="text" name="novaksolutions_upsell_default_success_url" value="' . get_option('novaksolutions_upsell_default_success_url') . '" size="45" /><br />';
-    echo '<span class="description">Unless you specify a different success URL in your shortcode, your customer will be directed to this URL after a successful upsell.</span>';
+    echo '<span class="description"><strong>REQUIRED:</strong> Unless you specify a different success URL in your shortcode, your customer will be directed to this URL after a successful upsell.</span>';
 }
 
 function novaksolutions_upsell_callback_function_default_failure_url() {
     echo '<input type="text" name="novaksolutions_upsell_default_failure_url" value="' . get_option('novaksolutions_upsell_default_failure_url') . '" size="45" /><br />';
-    echo '<span class="description">Unless you specify a different failure URL in your shortcode, your customer will be directed to this URL if something goes wrong during the upsell (such as a rejected credit card).</span>';
+    echo '<span class="description"><strong>REQUIRED:</strong> Unless you specify a different failure URL in your shortcode, your customer will be directed to this URL if something goes wrong during the upsell (such as a rejected credit card).</span>';
 }
 
 function novaksolutions_upsell_callback_function_merchantaccount_id() {
@@ -103,7 +112,7 @@ function novaksolutions_upsell_callback_function_merchantaccount_id() {
     if($merchantId !== false) {
         echo '<p><span class="description">Based on your Infusionsoft account history, this should probably be set to: <strong>'.$merchantId.'</strong></span></p>';
     }
-    echo '<p><span class="description">This merchant account will be used when processing upsell orders. To find your merchant account ID, open Infusionsoft and go to E-Commerce&rarr;Settings&rarr;Merchant Accounts. The account ID will be listed after "ID=" in the edit URL for the merchant account you\'d like to use.</span></p>';
+    echo '<p><span class="description"><strong>REQUIRED:</strong> This merchant account will be used when processing upsell orders. To find your merchant account ID, open Infusionsoft and go to E-Commerce&rarr;Settings&rarr;Merchant Accounts. The account ID will be listed after "ID=" in the edit URL for the merchant account you\'d like to use.</span></p>';
 }
 
 function novaksolutions_upsell_callback_function_test_merchantaccount_id() {
@@ -116,14 +125,19 @@ function novaksolutions_upsell_callback_function_default_action_set_id() {
     echo '<span class="description">Unless you specify a different action set ID in your shortcode, we will run this action set after a successful upsell. To find your action set ID, open Infusionsoft and go to E-commerce&rarr;Actions. Click Actions for the set you\'d like to use. The action set ID is listed after "ID=" in the URL of the window that opens after clicking the Actions button.</span>';
 }
 
+function novaksolutions_upsell_callback_function_default_id() {
+    echo '<input type="text" name="novaksolutions_upsell_default_id" value="' . get_option('novaksolutions_upsell_default_id') . '" /><br />';
+    echo '<span class="description">You can style your upsell button by adding a CSS ID to it.</span>';
+}
+
 function novaksolutions_upsell_callback_function_default_class() {
     echo '<input type="text" name="novaksolutions_upsell_default_class" value="' . get_option('novaksolutions_upsell_default_class') . '" /><br />';
     echo '<span class="description">You can style your upsell button by adding a CSS class to it.</span>';
 }
 
 function novaksolutions_upsell_add_admin_menu(){
-    add_menu_page( "Infusionsoft® One-click Upsell", "One-click Upsell", "edit_plugins", "novaksolutions_upsell_admin_menu", 'novaksolutions_upsell_display_admin_page');
-    add_submenu_page( "novaksolutions_upsell_admin_menu", "Infusionsoft® One-click Upsell", "Settings", "edit_plugins", "novaksolutions_upsell_admin_menu", 'novaksolutions_upsell_display_admin_page');
+    add_menu_page( "Infusionsoft One-click Upsell", "One-click Upsell", "edit_plugins", "novaksolutions_upsell_admin_menu", 'novaksolutions_upsell_display_admin_page');
+    add_submenu_page( "novaksolutions_upsell_admin_menu", "Infusionsoft One-click Upsell", "Settings", "edit_plugins", "novaksolutions_upsell_admin_menu", 'novaksolutions_upsell_display_admin_page');
     add_submenu_page( "novaksolutions_upsell_admin_menu", "One-click Upsell Usage Instructions", "Usage", "edit_posts", "novaksolutions_upsell_usage", "novaksolutions_upsell_display_usage");
     add_submenu_page( "novaksolutions_upsell_admin_menu", "Product Upsell Links", "Product Upsell Links", "edit_posts", "novaksolutions_upsell_product_links", "novaksolutions_upsell_display_product_links");
 }
@@ -210,11 +224,12 @@ function novaksolutions_upsell_get_products(){
 
 function novaksolutions_upsell_display_link_back(){
     echo '<h2>Like this plugin?</h2>';
-    echo '<p>Visit <a href="http://novaksolutions.com/?utm_source=wordpress&utm_medium=link&utm_campaign=upsell">Novak Solutions</a> to find dozens of free tips, tricks, and tools to help you get the most out of Infusionsoft®.</p>';
+    echo '<p>If you found this plugin useful, please <a href="http://wordpress.org/support/view/plugin-reviews/infusionsoft-one-click-upsell">rate it in the plugin directory</a>.</p>';
+    echo '<p>Visit <a href="http://novaksolutions.com/?utm_source=wordpress&utm_medium=link&utm_campaign=upsell">Novak Solutions</a> to find dozens of free tips, tricks, and tools to help you get the most out of Infusionsoft.</p>';
 }
 
 function novaksolutions_upsell_display_admin_page(){
-    echo '<h2>Infusionsoft&reg; One-click Upsell Settings</h2>';
+    echo '<h2>Infusionsoft One-click Upsell Settings</h2>';
 
     $products = novaksolutions_upsell_get_products();
     settings_errors();
@@ -234,7 +249,7 @@ function novaksolutions_upsell_display_product_links(){
     $products = novaksolutions_upsell_get_products();
     settings_errors();
 
-    echo '<p>Getting started with the <em>Infusionsoft&reg; One-click Upsell</em> plugin is easy. Simply include one of these <em>upsell</em> shortcodes in your order "thank you" page.</p>';
+    echo '<p>Getting started with the <em>Infusionsoft One-click Upsell</em> plugin is easy. Simply include one of these <em>upsell</em> shortcodes in your order "thank you" page.</p>';
 
     if(count($products) > 0){
         echo '<p><em>Showing the first <strong>' . number_format(count($products)). '</strong> products in your Infusionsoft app.</em></p>';
@@ -255,15 +270,20 @@ function novaksolutions_upsell_display_usage(){
     <h2>One-click Upsell Usage Instructions</h2>
 
     <h3>Upsell Usage</h3>
+
+    <p>Several settings are required. Your upsell button will not be displayed unless you have provided a value for all of the required settings.</p>
+
     <p><strong>Example usage:</strong> [upsell product_id="12"]</p>
     <p>Use the upsell shortcode on any Thank You page or post. Make sure you select the option in Infusionsoft to pass the contact's information to the Thank You page.</p>
     <p>Once the customer clicks the upsell button, One-click Upsell will charge the customer's last used credit card and place the order in Infusionsoft.</p>
 
-    <h4>Parameters:</h4>
+    <h4>Available attributes:</h4>
 
     <p><strong>product_id</strong> &ndash; The shortcode's only required parameter is the product_id, which should contain the numeric product ID from Infusionsoft. You can find a sample list of your products on the <a href="<?php echo admin_url( 'admin.php?page=novaksolutions_upsell_product_links' ); ?>">Product Upsell Links</a> page.</p>
 
-    <p><strong>button_text</strong> &ndash; You can change the text of the upsell button by setting the button_text parameter.</p>
+    <p><strong>button_text</strong> &ndash; You can change the text of the upsell button by setting the button_text parameter. Default value is: Yes!</p>
+
+    <p><strong>id</strong> &ndash; You can add a CSS ID to your upsell button with the ID parameter.</p>
 
     <p><strong>class</strong> &ndash; You can add a CSS class to your upsell button with the class parameter.</p>
 

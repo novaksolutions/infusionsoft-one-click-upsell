@@ -5,7 +5,7 @@ Author URI: http://novaksolutions.com/
 Plugin URI: http://novaksolutions.com/wordpress-plugins/infusionsoft-one-click-upsell/
 Requires at least: 2.7
 Tested up to: 3.8.1
-Stable tag: 1.1.5
+Stable tag: 1.1.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,7 +25,23 @@ Once the customer clicks the upsell button, One-click Upsell will charge the cus
 
 Yes, you will need to provide your Infusionsoft API key.
 
+== Screenshots ==
+
+1. The upsell button is highly configurable. The settings page guides you through the configuration process.
+2. Detailed usage instructions are provided by the plugin.
+3. Example shortcodes -- using your REAL product data -- are provided by the plugin.
+4. Using the shortcode in a post or page is easy.
+5. The upsell shows up as a button on your post or page.
+
 == Changelog ==
+
+= 1.1.6 =
+* Add ability to set a CSS ID on your button.
+* Mark certain fields as required.
+* Refuse to show button if required fields are not set.
+* Add link to more plugins by Novak Solutions.
+* Add link requesting ratings at WP.org.
+* Add screenshots.
 
 = 1.1.5 =
 * Suggests merchant account ID based on recent usage within Infusionsoft
