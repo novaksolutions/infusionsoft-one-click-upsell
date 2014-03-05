@@ -5,7 +5,7 @@ Plugin Name: Infusionsoft One-click Upsell
 Plugin URI: http://novaksolutions.com/wordpress-plugins/infusionsoft-one-click-upsell/
 Description: Easily upsell Infusionsoft customers from within WordPress.
 Author: Novak Solutions
-Version: 1.1.6
+Version: 1.1.7
 Author URI: http://novaksolutions.com/
 */
 
@@ -69,9 +69,9 @@ function novaksolutions_shortcode_upsell($attributes){
         >
     </form>
 
-    <?php if($test){ ?>Usage: [upsell test="true" action_set_id="" success_url="http://www.google.com" failure_url="http://failblog.com" product_id="12" button_text="Yes!"]<br/>To disable test mode, remove test="true" from the shortcode.<? }?>
+    <?php if($test){ ?>Usage: [upsell test="true" action_set_id="" success_url="http://www.google.com" failure_url="http://failblog.com" product_id="12" button_text="Yes!"]<br/>To disable test mode, remove test="true" from the shortcode.<?php } ?>
 
-    <?
+    <?php
     $html = ob_get_clean();
 
     return $html;
@@ -82,3 +82,4 @@ function novaksolutions_shortcode_downsell(){
     $contact_id = $_GET['contactId'];
     return 'orderId=' . $order_id . '&contactId=' . $contact_id;
 }
+
