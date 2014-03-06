@@ -3,6 +3,32 @@
 add_action('wp_ajax_process_upsell', 'novaksolutions_process_upsell');
 add_action('wp_ajax_nopriv_process_upsell', 'novaksolutions_process_upsell');
 
+function novaksolutions_upsell_getContactId($orderId, $firstName, $lastName) {
+    Infusionsoft_AppPool::addApp(new Infusionsoft_App(get_option('infusionsoft_sdk_app_name') . '.infusionsoft.com', get_option('infusionsoft_sdk_api_key')));
+
+    try {
+        $order = new Infusionsoft_Job($orderId);
+    } catch (Exception $e) {
+        return false;
+    }
+
+    $contactId = (string) $order->ContactId;
+
+    if($contactId) {
+
+        try {
+            $contact = new Infusionsoft_Contact($contactId);
+        } catch (Exception $e) {
+            return false;
+        }
+
+        if((string) $contact->FirstName == $firstName && (string) $contact->LastName == $lastName){
+            return $contactId;
+        }
+    }
+
+    return false;
+}
 
 function novaksolutions_process_upsell(){
 //    require_once('Infusionsoft/infusionsoft.php');

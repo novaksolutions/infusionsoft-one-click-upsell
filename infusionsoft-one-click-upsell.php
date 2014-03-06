@@ -5,7 +5,7 @@ Plugin Name: Infusionsoft One-click Upsell
 Plugin URI: http://novaksolutions.com/wordpress-plugins/infusionsoft-one-click-upsell/
 Description: Easily upsell Infusionsoft customers from within WordPress.
 Author: Novak Solutions
-Version: 1.1.7
+Version: 1.1.8
 Author URI: http://novaksolutions.com/
 */
 
@@ -41,7 +41,14 @@ function novaksolutions_shortcode_upsell($attributes){
     }
 
     $order_id = isset($_GET['orderId']) ? $_GET['orderId'] : '';
-    $contact_id = isset($_GET['contactId']) ? $_GET['contactId'] : '';
+
+    if(isset($_GET['contactId'])) {
+        $contact_id = $_GET['contactId'];
+    } elseif(isset($_GET['inf_field_FirstName'], $_GET['inf_field_LastName'])) {
+        $contact_id = novaksolutions_upsell_getContactId($order_id, $_GET['inf_field_FirstName'], $_GET['inf_field_LastName']);
+    } else {
+        $contact_id = false;
+    }
 
     $product_id = $attributes['product_id'];
     $success_url = $attributes['success_url'];
@@ -61,7 +68,7 @@ function novaksolutions_shortcode_upsell($attributes){
         <?php echo $test ? 'Product Id:' : ''; ?><input type="<?php echo $test ? 'text' : 'hidden'; ?>" name="product_id" value="<?php echo $product_id ?>"> <?php echo $test ? '<br />' : ''; ?>
         <?php echo $test ? 'Success Url:' : ''; ?><input type="<?php echo $test ? 'text' : 'hidden'; ?>" name="success_url" value="<?php echo htmlentities($success_url) ?>"> <?php echo $test ? '<br />' : ''; ?>
         <?php echo $test ? 'Success Url:' : ''; ?><input type="<?php echo $test ? 'text' : 'hidden'; ?>" name="failure_url" value="<?php echo htmlentities($failure_url) ?>"> <?php echo $test ? '<br />' : ''; ?>
-        <?php echo $test ? 'Test:' : ''; ?><input type="<?php echo $test ? 'text' : 'hidden'; ?>" name="test" value="<?php echo $test ? 'true' : 'faslse'?>"> <?php echo $test ? '<br />' : ''; ?>
+        <?php echo $test ? 'Test:' : ''; ?><input type="<?php echo $test ? 'text' : 'hidden'; ?>" name="test" value="<?php echo $test ? 'true' : 'false'?>"> <?php echo $test ? '<br />' : ''; ?>
         <?php echo $test ? 'ActionSetId:' : ''; ?><input type="<?php echo $test ? 'text' : 'hidden'; ?>" name="action_set_id" value="<?php echo htmlentities($action_set_id) ?>"> <?php echo $test ? '<br />' : ''; ?>
         <input type="submit" onclick="this.disabled=true; this.form.submit(); return false;" value="<?php echo htmlentities($button_text); ?>" 
             <?php if($class) echo ' class="' . htmlentities($class) . '"'; ?>
@@ -79,7 +86,15 @@ function novaksolutions_shortcode_upsell($attributes){
 
 function novaksolutions_shortcode_downsell(){
     $order_id = $_GET['orderId'];
-    $contact_id = $_GET['contactId'];
+
+    if(isset($_GET['contactId'])) {
+        $contact_id = $_GET['contactId'];
+    } elseif(isset($_GET['inf_field_FirstName'], $_GET['inf_field_LastName'])) {
+        $contact_id = novaksolutions_upsell_getContactId($order_id, $_GET['inf_field_FirstName'], $_GET['inf_field_LastName']);
+    } else {
+        $contact_id = false;
+    }
+
     return 'orderId=' . $order_id . '&contactId=' . $contact_id;
 }
 
