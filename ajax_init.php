@@ -22,7 +22,7 @@ function novaksolutions_upsell_getContactId($orderId, $firstName, $lastName) {
             return false;
         }
 
-        if((string) $contact->FirstName == $firstName && (string) $contact->LastName == $lastName){
+        if(strcasecmp((string) $contact->FirstName, $firstName) == 0 && strcasecmp((string) $contact->LastName, $lastName) == 0){
             return $contactId;
         }
     }
