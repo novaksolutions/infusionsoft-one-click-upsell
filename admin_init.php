@@ -151,7 +151,7 @@ function novaksolutions_upsell_get_merchant_accounts(){
     // Find out what merchant ID was used recently so it can be suggested to the user.
     try{
         Infusionsoft_AppPool::addApp(new Infusionsoft_App(get_option('infusionsoft_sdk_app_name') . '.infusionsoft.com', get_option('infusionsoft_sdk_api_key')));
-        $merchants = Infusionsoft_DataService::queryWithOrderBy(new Infusionsoft_CCharge(), array('MerchantId' => '%'), 'MerchantId', false, 100, 0, array('MerchantId'));
+        $merchants = Infusionsoft_DataService::queryWithOrderBy(new Infusionsoft_CCharge(), array('Id' => '%'), 'Id', false, 100, 0, array('MerchantId'));
         $m = array();
         foreach($merchants as $merchant) {
             if(!isset($m[$merchant->MerchantId])) $m[$merchant->MerchantId] = 0;
