@@ -5,7 +5,7 @@ Plugin Name: Infusionsoft One-click Upsell
 Plugin URI: http://novaksolutions.com/wordpress-plugins/infusionsoft-one-click-upsell/
 Description: Easily upsell Infusionsoft customers from within WordPress.
 Author: Novak Solutions
-Version: 1.1.10
+Version: 1.1.11
 Author URI: http://novaksolutions.com/
 */
 

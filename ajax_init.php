@@ -100,6 +100,7 @@ function novaksolutions_process_upsell(){
                 date_default_timezone_set($original_time_zone);
                 $orderInfo = Infusionsoft_InvoiceService::getOrderId($invoiceId);
                 $orderId = $orderInfo['orderId'];
+                $pass_along_params['addnOrderId'] = $orderId;
 
                 $order = new Infusionsoft_Job($orderId);
 
