@@ -78,6 +78,24 @@ function novaksolutions_admin_init(){
         'novaksolutions-upsell-settings',
         'novaksolutions_upsell_setting_section_defaults');
 
+    add_settings_field('novaksolutions_upsell_default_image',
+        'Default Button Image',
+        'novaksolutions_upsell_callback_function_default_image',
+        'novaksolutions-upsell-settings',
+        'novaksolutions_upsell_setting_section_defaults');
+
+    add_settings_field('novaksolutions_upsell_default_image_width',
+        'Default Button Image Width',
+        'novaksolutions_upsell_callback_function_default_image_width',
+        'novaksolutions-upsell-settings',
+        'novaksolutions_upsell_setting_section_defaults');
+
+    add_settings_field('novaksolutions_upsell_default_image_height',
+        'Default Button Image Height',
+        'novaksolutions_upsell_callback_function_default_image_height',
+        'novaksolutions-upsell-settings',
+        'novaksolutions_upsell_setting_section_defaults');
+
     // Register our setting so that $_POST handling is done for us and
     // our callback function just has to echo the <input>
     register_setting('novaksolutions-upsell-settings', 'novaksolutions_upsell_merchantaccount_id', 'novaksolutions_upsell_sanitize_absint');
@@ -89,6 +107,9 @@ function novaksolutions_admin_init(){
     register_setting('novaksolutions-upsell-settings', 'novaksolutions_upsell_default_id', 'sanitize_html_class');
     register_setting('novaksolutions-upsell-settings', 'novaksolutions_upsell_default_class', 'sanitize_html_class');
 
+    register_setting('novaksolutions-upsell-settings', 'novaksolutions_upsell_default_image', 'esc_url');
+    register_setting('novaksolutions-upsell-settings', 'novaksolutions_upsell_default_image_width', 'novaksolutions_upsell_sanitize_absint');
+    register_setting('novaksolutions-upsell-settings', 'novaksolutions_upsell_default_image_height', 'novaksolutions_upsell_sanitize_absint');
 }
 
 function novaksolutions_upsell_sanitize_absint($value) {
@@ -133,6 +154,21 @@ function novaksolutions_upsell_callback_function_default_id() {
 function novaksolutions_upsell_callback_function_default_class() {
     echo '<input type="text" name="novaksolutions_upsell_default_class" value="' . get_option('novaksolutions_upsell_default_class') . '" /><br />';
     echo '<span class="description">You can style your upsell button by adding a CSS class to it.</span>';
+}
+
+function novaksolutions_upsell_callback_function_default_image() {
+    echo '<input type="text" name="novaksolutions_upsell_default_image" value="' . get_option('novaksolutions_upsell_default_image') . '" size="45" /><br />';
+    echo '<span class="description">You can optionally use an image for your upsell button. Please specify the full URL to the image.</span>';
+}
+
+function novaksolutions_upsell_callback_function_default_image_width() {
+    echo '<input type="text" name="novaksolutions_upsell_default_image_width" value="' . get_option('novaksolutions_upsell_default_image_width') . '" />px<br />';
+    echo '<span class="description">If you use an image for your upsell button, you must specify the width of the image in pixels.</span>';
+}
+
+function novaksolutions_upsell_callback_function_default_image_height() {
+    echo '<input type="text" name="novaksolutions_upsell_default_image_height" value="' . get_option('novaksolutions_upsell_default_image_height') . '" />px<br />';
+    echo '<span class="description">If you use an image for your upsell button, you must specify the height of the image in pixels.</span>';
 }
 
 function novaksolutions_upsell_add_admin_menu(){
@@ -292,6 +328,12 @@ function novaksolutions_upsell_display_usage(){
     <p><strong>failure_url</strong> &ndash; If the upsell fails (for example, if the credit card is declined), the customer will be redirected to this URL.</p>
 
     <p><strong>action_set_id</strong> &ndash; Optionally run an Infusionsoft action set if the order is successful.</p>
+
+    <p><strong>image</strong> &ndash; A full URL to an image to use for the button. If you don't specify an image, a standard submit button will be used.</p>
+
+    <p><strong>image_width</strong> &ndash; If you choose to use an image, you <strong>must</strong> specify the image width in pixels. Your image will not be used if you do not use this attribute.</p>
+
+    <p><strong>image_height</strong> &ndash; If you choose to use an image, you <strong>must</strong> specify the image height in pixels. Your image will not be used if you do not use this attribute.</p>
 
     <p><strong>test</strong> &ndash; To enable test mode for this upsell, set this parameter to <em>true</em>. This will give you additional debugging information, and send the transaction through the test merchant account that you've configured.</p>
 
