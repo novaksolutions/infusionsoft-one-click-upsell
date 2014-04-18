@@ -217,7 +217,7 @@ function novaksolutions_upsell_get_products(){
 
         try{
             Infusionsoft_AppPool::addApp(new Infusionsoft_App(get_option('infusionsoft_sdk_app_name') . '.infusionsoft.com', get_option('infusionsoft_sdk_api_key')));
-            $products = Infusionsoft_DataService::query(new Infusionsoft_Product(), array('Id' => '%'));
+            $products = Infusionsoft_DataService::query(new Infusionsoft_Product(), array('Id' => '%'), 1000, 0, array('Id', 'ProductName'));
         } catch(Infusionsoft_Exception $e) {
             $enough_to_go = false;
 

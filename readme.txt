@@ -5,7 +5,7 @@ Author URI: http://novaksolutions.com/
 Plugin URI: http://novaksolutions.com/wordpress-plugins/infusionsoft-one-click-upsell/
 Requires at least: 2.7
 Tested up to: 3.9
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -34,6 +34,10 @@ Yes, you will need to provide your Infusionsoft API key.
 5. The upsell shows up as a button on your post or page.
 
 == Changelog ==
+
+= 1.2.1 =
+* Tested up to 3.9
+* Only pull product names and IDs. This prevents xmlrpc.inc errors when the product description contains a character that isn't valid XML, and you are using a plugin that loads a version of xmlrpc.inc that doesn't strip out invalid characters (for example, iMember360).
 
 = 1.2.0 =
 * Tested up to 3.8.2
