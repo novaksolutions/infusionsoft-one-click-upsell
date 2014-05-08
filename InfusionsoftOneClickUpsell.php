@@ -54,6 +54,11 @@ class InfusionsoftOneClickUpsell
             }
         }
 
+        // Make sure a button text is always set
+        if(empty($attributes['button_text'])) {
+            $attributes['button_text'] = 'Yes!';
+        }
+
         // If missing any of the image attributes, use global defaults
         if(!isset($attributes['image'], $attributes['image_width'], $attributes['image_height'])) {
             $attributes['image'] = get_option('novaksolutions_upsell_default_image');
