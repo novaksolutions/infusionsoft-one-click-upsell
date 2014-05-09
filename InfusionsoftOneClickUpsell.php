@@ -24,6 +24,9 @@ class InfusionsoftOneClickUpsell
         // Add shortcode AJAX handlers
         add_action('wp_ajax_process_upsell', array($this, 'processUpsell'));
         add_action('wp_ajax_nopriv_process_upsell', array($this, 'processUpsell'));
+
+        // Enqueue jQuery
+        add_action( 'admin_enqueue_scripts', array($this, 'adminEnqueueScripts'), 8 );
     }
 
     /**
@@ -264,7 +267,7 @@ CSS;
     }
 
     /**
-     * Configure menu pages.
+     * Configure menu pages and shortcode JS.
      */
     public function adminInit()
     {
@@ -386,6 +389,34 @@ CSS;
         register_setting('novaksolutions-upsell-settings', 'novaksolutions_upsell_default_image', 'esc_url');
         register_setting('novaksolutions-upsell-settings', 'novaksolutions_upsell_default_image_width', array($this, 'callbackSanitizeAbsint'));
         register_setting('novaksolutions-upsell-settings', 'novaksolutions_upsell_default_image_height', array($this, 'callbackSanitizeAbsint'));
+
+        // Load MCE plugins
+        if ( current_user_can( 'edit_posts' ) && current_user_can( 'edit_pages' ) ) {
+            if ( in_array(basename($_SERVER['PHP_SELF']), array('post-new.php', 'page-new.php', 'post.php', 'page.php') ) ) {
+                add_filter('mce_buttons', array($this, 'filterMceButton'));
+                add_filter('mce_external_plugins', array($this, 'filterMcePlugin'));
+                add_action('edit_form_advanced', array($this, 'shortcodeMceHandler'));
+                add_action('edit_page_form', array($this, 'shortcodeMceHandler'));
+            }
+        }
+    }
+
+    /**
+     * Load shortcode button JS
+     */
+    public function filterMcePlugin($plugins) {
+        $plugins['oneclickupsell'] = plugins_url("js/editor_plugin.js", __FILE__);
+
+        return $plugins;
+    }
+
+    /**
+     * Add shortcode buttons to MCE
+     */
+    public function filterMceButton($buttons) {
+        array_push( $buttons, '|', 'oneclickupsell', 'oneclickdownsell' );
+
+        return $buttons;
     }
 
     /**
@@ -855,4 +886,176 @@ CSS;
         }
     }
 
+    /**
+     * Output the required Javascript to handle the MCE shortcode button
+     */
+    public function shortcodeMceHandler(){
+        ?>
+        <script type="text/javascript">
+            var defaultSettings = {},
+                outputOptions = '',
+                selected ='',
+                content = '';
+
+            defaultSettings['upsell'] = {
+                test: {
+                    name: 'Test Mode',
+                    defaultvalue: 'No',
+                    description: 'Enable test mode to display troubleshooting information.',
+                    type: 'select',
+                    options: 'Yes|No'
+                },
+                product_id: {
+                    name: 'Product ID',
+                    defaultvalue: '',
+                    description: 'REQUIRED: The ID for the product you are offering with your upsell.',
+                    type: 'text'
+                },
+                success_url: {
+                    name: 'Success URL',
+                    defaultvalue: '',
+                    description: 'Your customer will be directed to this URL after a successful upsell.',
+                    type: 'text'
+                },
+                failure_url: {
+                    name: 'Failure URL',
+                    defaultvalue: '',
+                    description: 'Your customer will be directed to this URL after an unsuccessful upsell.',
+                    type: 'text'
+                },
+                action_set_id: {
+                    name: 'Action Set ID',
+                    defaultvalue: '',
+                    description: 'This action set will be run after a successful upsell.',
+                    type: 'text'
+                },
+                id: {
+                    name: 'Button CSS ID',
+                    defaultvalue: '',
+                    description: 'You can style your upsell button by adding a CSS ID to it.',
+                    type: 'text'
+                },
+                class: {
+                    name: 'Button CSS Class',
+                    defaultvalue: '',
+                    description: 'You can style your upsell button by adding a CSS class to it.',
+                    type: 'text'
+                },
+                button_text: {
+                    name: 'Button Text',
+                    defaultvalue: '',
+                    description: 'The text that will be shown for the upsell button.',
+                    type: 'text'
+                },
+                image: {
+                    name: 'Button Image',
+                    defaultvalue: '',
+                    description: 'You can optionally use an image for your upsell button. Please specify the full URL to the image.',
+                    type: 'text'
+                },
+                image_width: {
+                    name: 'Button Image Width',
+                    defaultvalue: '',
+                    description: 'If you use an image for your upsell button, you must specify the width of the image in pixels.',
+                    type: 'text'
+                },
+                image_height: {
+                    name: 'Button Image Height',
+                    defaultvalue: '',
+                    description: 'If you use an image for your upsell button, you must specify the height of the image in pixels.',
+                    type: 'text'
+                }
+            };
+
+            function CustomButtonClick(tag){
+
+                var index = tag;
+
+                for (var index2 in defaultSettings[index]) {
+                    outputOptions += '<tr>\n';
+                    outputOptions += '<th><label for="oneclick-' + index2 + '">'+ defaultSettings[index][index2]['name'] +'</label></th>\n';
+                    outputOptions += '<td>';
+
+                    if (defaultSettings[index][index2]['type'] === 'select') {
+                        var optionsArray = defaultSettings[index][index2]['options'].split('|');
+
+                        outputOptions += '\n<select name="oneclick-'+index2+'" id="oneclick-'+index2+'">\n';
+
+                        for (var index3 in optionsArray) {
+                            selected = (optionsArray[index3] === defaultSettings[index][index2]['defaultvalue']) ? ' selected="selected"' : '';
+                            outputOptions += '<option value="'+optionsArray[index3]+'"'+ selected +'>'+optionsArray[index3]+'</option>\n';
+                        }
+
+                        outputOptions += '</select>\n';
+                    }
+
+                    if (defaultSettings[index][index2]['type'] === 'text') {
+                        outputOptions += '\n<input type="text" name="oneclick-'+index2+'" id="oneclick-'+index2+'" value="'+defaultSettings[index][index2]['defaultvalue']+'" />\n';
+                    }
+
+                    outputOptions += '\n<br/><small>'+ defaultSettings[index][index2]['description'] +'</small>';
+                    outputOptions += '\n</td>';
+
+                }
+
+
+                var width = jQuery(window).width(),
+                    tbHeight = jQuery(window).height(),
+                    tbWidth = ( 720 < width ) ? 720 : width;
+
+                tbWidth = tbWidth - 80;
+                tbHeight = tbHeight - (84 + 35);
+
+                var tbOptions = "<div id='oneclick_shortcodes_div'><form id='oneclick_shortcodes'><table id='shortcodes_table' class='form-table oneclick-"+ tag +"'>";
+                tbOptions += outputOptions;
+                tbOptions += '</table>\n<p class="submit">\n<input type="button" id="shortcodes-submit" class="button-primary" value="Add shortcode" name="submit" /></p>\n</form></div>';
+
+                var form = jQuery(tbOptions);
+
+                var table = form.find('table');
+                form.appendTo('body').hide();
+
+                form.find('#shortcodes-submit').click(function(){
+
+                    var shortcode = '['+tag;
+
+                    for( var index in defaultSettings[tag]) {
+                        var value = table.find('#oneclick-' + index).val();
+                        if (index === 'content') {
+                            content = value;
+                            continue;
+                        }
+
+                        if ( value !== defaultSettings[tag][index]['defaultvalue'] )
+                            shortcode += ' ' + index + '="' + value + '"';
+
+                    }
+
+                    shortcode += '] ' + "\n";
+
+                    if (content != '') {
+                        shortcode += content;
+                        shortcode += '[/'+tag+'] ' + "\n";
+                    }
+
+                    tinyMCE.activeEditor.execCommand('mceInsertContent', 0, shortcode + ' ');
+
+                    tb_remove();
+                });
+
+                tb_show( 'Infusionsoft One-click ' + tag.charAt(0).toUpperCase() + tag.slice(1) + ' Shortcode', '#TB_inline?width=' + tbWidth + '&height=' + tbHeight + '&inlineId=oneclick_shortcodes_div' );
+                jQuery('#oneclick_shortcodes_div').remove();
+                outputOptions = '';
+            }
+        </script>
+    <?php }
+
+    /**
+     * Enqueue scripts
+     */
+    public function adminEnqueueScripts(){
+        wp_enqueue_script('jquery');
+    }
+
 }
+
