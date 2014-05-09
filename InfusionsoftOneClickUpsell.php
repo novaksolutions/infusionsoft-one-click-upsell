@@ -188,7 +188,7 @@ CSS;
      */
     function shortcodeDownsell()
     {
-        $order_id = $_GET['orderId'];
+        $order_id = isset($_GET['orderId']) ? $_GET['orderId'] : false;
 
         if(isset($_GET['contactId'])) {
             $contact_id = $_GET['contactId'];

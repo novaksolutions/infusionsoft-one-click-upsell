@@ -37,6 +37,7 @@ Yes, you will need to provide your Infusionsoft API key.
 
 = 2.1.0 = 
 * Added button to editor that makes it easy to add a shortcode.
+* Bug fix: Make sure GET variable exists before trying to access it.
 
 = 2.0.2 =
 * Tested up to 3.9.1
