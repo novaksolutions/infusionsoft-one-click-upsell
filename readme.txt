@@ -4,8 +4,8 @@ Tags: infusionsoft, upsell, one-click, javascript
 Author URI: http://novaksolutions.com/
 Plugin URI: http://novaksolutions.com/wordpress-plugins/infusionsoft-one-click-upsell/
 Requires at least: 2.7
-Tested up to: 3.9
-Stable tag: 2.0.1
+Tested up to: 3.9.1
+Stable tag: 2.0.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -34,6 +34,11 @@ Yes, you will need to provide your Infusionsoft API key.
 5. The upsell shows up as a button on your post or page.
 
 == Changelog ==
+
+= 2.0.2 =
+* Tested up to 3.9.1
+* Re-added modification from 1.2.1 that got lost in 2.0.0 rewrite
+* Fixed missing action links
 
 = 2.0.1 =
 * Set a default button text, for situations where the user doesn't specify one.
