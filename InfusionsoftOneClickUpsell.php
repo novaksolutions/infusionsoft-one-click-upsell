@@ -92,7 +92,7 @@ class InfusionsoftOneClickUpsell
         if(isset($_GET['orderId']) && $_GET['orderId']) {
             $order_id = $_GET['orderId'];
         } else {
-            return false;
+            $order_id = '';
         }
 
         // Contact ID is required. Make sure we have it.
@@ -100,12 +100,8 @@ class InfusionsoftOneClickUpsell
             $contact_id = $_GET['contactId'];
         } elseif(isset($_GET['inf_field_FirstName'], $_GET['inf_field_LastName'])) {
             $contact_id = $this->getContactId($order_id, $_GET['inf_field_FirstName'], $_GET['inf_field_LastName']);
-
-            if(!$contact_id){
-                return false;
-            }
         } else {
-            return false;
+            $contact_id = '';
         }
 
         // Set default checksum. This is used to give unique IDs for elements.
