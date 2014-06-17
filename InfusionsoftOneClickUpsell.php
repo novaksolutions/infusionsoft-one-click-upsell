@@ -84,8 +84,12 @@ class InfusionsoftOneClickUpsell
         }
 
         // Product ID is required. Make sure it is set.
-        if(!$attributes['product_id']){
-            return "ERROR: The Infusionsoft One-click Upsell shortcode requires a product ID.";
+        if(empty($attributes['product_id']) && empty($attributes['subscription_id'])){
+            return "ERROR: The Infusionsoft One-click Upsell shortcode requires a product ID or subscription ID.";
+        }
+
+        if(!empty($attributes['product_id']) && !empty($attributes['subscription_id'])){
+            return "ERROR: The Infusionsoft One-click Upsell shortcode cannot have both a product ID and a subscription ID.";
         }
 
         // Order ID is required. Make sure we have it.
@@ -144,8 +148,13 @@ CSS;
         $output .= $test ? 'Existing Order Id:' : '';
         $output .= '<input type="' . ($test ? 'text' : 'hidden') . '" name="order_id" value="' . htmlentities($order_id) . '"> ' . ($test ? '<br />' : '');
 
-        $output .= $test ? 'Product Id:' : '';
-        $output .= '<input type="' . ($test ? 'text' : 'hidden') . '" name="product_id" value="' . htmlentities($attributes['product_id']) . '"> ' . ($test ? '<br />' : '');
+        if(!empty($attributes['product_id'])) {
+            $output .= $test ? 'Product Id:' : '';
+            $output .= '<input type="' . ($test ? 'text' : 'hidden') . '" name="product_id" value="' . htmlentities($attributes['product_id']) . '"> ' . ($test ? '<br />' : '');
+        } else {
+            $output .= $test ? 'Subscription Id:' : '';
+            $output .= '<input type="' . ($test ? 'text' : 'hidden') . '" name="subscription_id" value="' . htmlentities($attributes['subscription_id']) . '"> ' . ($test ? '<br />' : '');
+        }
 
         $output .= $test ? 'Success Url:' : '';
         $output .= '<input type="' . ($test ? 'text' : 'hidden') . '" name="success_url" value="' . htmlentities($attributes['success_url']) . '"> ' . ($test ? '<br />' : '');
@@ -257,6 +266,7 @@ CSS;
         add_submenu_page( "novaksolutions_upsell_admin_menu", "Infusionsoft One-click Upsell", "Settings", "manage_options", "novaksolutions_upsell_admin_menu", array($this, "adminPage"));
         add_submenu_page( "novaksolutions_upsell_admin_menu", "One-click Upsell Usage Instructions", "Usage", "edit_posts", "novaksolutions_upsell_usage", array($this, "displayUsage"));
         add_submenu_page( "novaksolutions_upsell_admin_menu", "Product Upsell Links", "Product Upsell Links", "edit_posts", "novaksolutions_upsell_product_links", array($this, "displayProductLinks"));
+        add_submenu_page( "novaksolutions_upsell_admin_menu", "Subscription Links", "Subscription Links", "edit_posts", "novaksolutions_upsell_subscription_links", array($this, "displaySubscriptionLinks"));
 
         // Configure menu pages
         add_action('admin_init', array($this, 'adminInit') );
@@ -600,7 +610,9 @@ CSS;
 
         <h4>Available attributes:</h4>
 
-        <p><strong>product_id</strong> &ndash; The shortcode's only required parameter is the product_id, which should contain the numeric product ID from Infusionsoft. You can find a sample list of your products on the <a href="<?php echo admin_url( 'admin.php?page=novaksolutions_upsell_product_links' ); ?>">Product Upsell Links</a> page.</p>
+        <p><strong>product_id</strong> &ndash; Unless you specify a subscription_id, you must specify a product_id. This should contain the numeric product ID from Infusionsoft. You can find a sample list of your products on the <a href="<?php echo admin_url( 'admin.php?page=novaksolutions_upsell_product_links' ); ?>">Product Upsell Links</a> page.</p>
+
+        <p><strong>subscription_id</strong> &ndash; Unless you specify a product_id, you must specify a subscription_id. This should contain the numeric subscription ID from Infusionsoft. You can find a sample list of your subscriptions on the <a href="<?php echo admin_url( 'admin.php?page=novaksolutions_upsell_subscription_links' ); ?>">Subscription Plan Upsell Links</a> page.</p>
 
         <p><strong>button_text</strong> &ndash; You can change the text of the upsell button by setting the button_text parameter. Default value is: Yes!</p>
 
@@ -662,6 +674,32 @@ CSS;
         $this->displayLinkBack();
     }
 
+    public function displaySubscriptionLinks()
+    {
+        echo '<h2>Subscription Plan Upsell Links</h2>';
+
+        $subscriptions = $this->getSubscriptions();
+        $products = $this->getProducts();
+        settings_errors();
+
+        echo '<p>Getting started with the <em>Infusionsoft One-click Upsell</em> plugin is easy. Simply include one of these <em>upsell</em> shortcodes in your order "thank you" page.</p>';
+
+        if(count($subscriptions) > 0){
+            echo '<p><em>Showing the first <strong>' . number_format(count($subscriptions)). '</strong> subscription plans in your Infusionsoft app.</em></p>';
+            echo '<ul>';
+            foreach($subscriptions as $subscription){
+                if(isset($products[$subscription->ProductId])){
+                    echo '<li>[upsell subscription_id="' . $subscription->Id . '" button_text="Subscribe to ' . htmlentities($products[$subscription->ProductId]->ProductName) . ' for ' . $subscription->getHumanizedPrice() . ' "]</li>';
+                }
+            }
+            echo '</ul>';
+        } else {
+            echo "<p><strong>We weren't able to find any subscription plans in your Infusionsoft app. Please make sure your app name and API key are correct on the settings page.</strong></p>";
+        }
+
+        $this->displayLinkBack();
+    }
+
     public function getProducts()
     {
         // Make sure the SDK is enabled and configured
@@ -677,7 +715,19 @@ CSS;
 
             try{
                 Infusionsoft_AppPool::addApp(new Infusionsoft_App(get_option('infusionsoft_sdk_app_name') . '.infusionsoft.com', get_option('infusionsoft_sdk_api_key')));
-                $products = Infusionsoft_DataService::query(new Infusionsoft_Product(), array('Id' => '%'), 1000, 0, array('Id', 'ProductName'));
+
+                $products = array();
+                $page = 0;
+
+                do {
+                    $products_orig = Infusionsoft_DataService::query(new Infusionsoft_Product(), array('Id' => '%'), 1000, $page, array('Id', 'ProductName'));
+
+                    foreach($products_orig as $product) {
+                        $products[$product->Id] = $product;
+                    }
+
+                    $page++;
+                } while(count($products_orig) == 1000);
             } catch(Infusionsoft_Exception $e) {
                 $enough_to_go = false;
 
@@ -716,6 +766,62 @@ CSS;
         }
 
         return $products;
+    }
+
+    public function getSubscriptions()
+    {
+        // Make sure the SDK is enabled and configured
+        if (!$this->hasSDK()) {
+            $subscriptions = array();
+            return $subscriptions;
+        }
+
+        $enough_to_go = false;
+        $valid_key = true;
+        if(get_option('infusionsoft_sdk_app_name') != '' && get_option('infusionsoft_sdk_api_key') != ''){
+            $enough_to_go = true;
+
+            try{
+                Infusionsoft_AppPool::addApp(new Infusionsoft_App(get_option('infusionsoft_sdk_app_name') . '.infusionsoft.com', get_option('infusionsoft_sdk_api_key')));
+                $subscriptions = Infusionsoft_DataService::query(new Infusionsoft_SubscriptionPlan(), array('Id' => '%'), 1000, 0);
+            } catch(Infusionsoft_Exception $e) {
+                $enough_to_go = false;
+
+                if($e == '[InvalidKey]Invalid Key') {
+                    $valid_key = false;
+                    add_settings_error("infusionsoft_sdk_api_key", "infusionsoft_sdk_api_key", "The API key you entered is invalid.", "error");
+                }
+            }
+        } else {
+            $subscriptions = array();
+
+            if(!get_option('infusionsoft_sdk_app_name')){
+                add_settings_error("infusionsoft_sdk_app_name", "infusionsoft_sdk_app_name", "Please enter your Infusionsoft app name.", "error");
+            }
+
+            if(!get_option('infusionsoft_sdk_api_key')){
+                $valid_key = false;
+                add_settings_error("infusionsoft_sdk_api_key", "infusionsoft_sdk_api_key", "Please enter your Infusionsoft API key.", "error");
+            }
+        }
+
+        if($enough_to_go && Infusionsoft_DataService::ping()){
+            try{
+                Infusionsoft_DataService::findByField(new Infusionsoft_Contact(), 'Id', -1);
+            } catch(Exception $e){
+                add_settings_error("infusionsoft_sdk_api_key", "infusionsoft_sdk_api_key", "The API key you entered is invalid.", "error");
+            }
+        } else {
+            if($valid_key){
+                add_settings_error("infusionsoft_sdk_app_name", "infusionsoft_sdk_app_name", "The app name you entered is invalid.", "error");
+            }
+        }
+
+        if(!is_numeric(get_option('novaksolutions_upsell_merchantaccount_id'))){
+            add_settings_error("novaksolutions_upsell_merchantaccount_id", "novaksolutions_upsell_merchantaccount_id", "The merchant account ID you entered is invalid. Your upsell shortcodes will not work until you enter your merchant account ID.", "error");
+        }
+
+        return $subscriptions;
     }
 
     /**
@@ -794,12 +900,23 @@ CSS;
 
         Infusionsoft_AppPool::addApp(new Infusionsoft_App(get_option('infusionsoft_sdk_app_name') . '.infusionsoft.com', get_option('infusionsoft_sdk_api_key')));
 
-        //Load information from request
+        // Load information from request
         $contact_id = $_POST['contact_id'];
         $order_id = $_POST['order_id'];
 
-        $product_id = $_POST['product_id'];
+        // Determine if doing a product or subscription upsell
+        $type = false;
+        if(isset($_POST['product_id'])) {
+            $product_id = $_POST['product_id'];
+            $type = 'product';
+        } elseif(isset($_POST['subscription_id'])) {
+            $subscription_id = $_POST['subscription_id'];
+            $type = 'subscription';
+        }
 
+        if(empty($type)) {
+            header('Location: ' . $failure_url . '?msg=' . urlencode('Missing product_id and subscription_id.'));
+        }
 
         $error = false;
 
@@ -839,30 +956,45 @@ CSS;
                     $original_time_zone = date_default_timezone_get();
                     date_default_timezone_set('America/New_York');
 
-                    $product = new Infusionsoft_Product($product_id);
+                    if($type == 'product') {
+                        // Products
 
-                    $invoiceId = Infusionsoft_InvoiceService::createBlankOrder($contact_id, 'Upsell - ' . $product->ProductName, date('Ymd') . 'T00:00:00', $lead_affiliate_id, $sale_affiliate_id);
+                        $product = new Infusionsoft_Product($product_id);
 
-                    Infusionsoft_InvoiceService::addOrderItem($invoiceId, $product_id, 4, $product->ProductPrice, $quantity, $product->ProductName, $product->ProductName);
+                        $invoiceId = Infusionsoft_InvoiceService::createBlankOrder($contact_id, 'Upsell - ' . $product->ProductName, date('Ymd') . 'T00:00:00', $lead_affiliate_id, $sale_affiliate_id);
 
+                        Infusionsoft_InvoiceService::addOrderItem($invoiceId, $product_id, 4, $product->ProductPrice, $quantity, $product->ProductName, $product->ProductName);
 
-                    $amountOwed = Infusionsoft_InvoiceService::calculateAmountOwed($invoiceId);
-                    Infusionsoft_InvoiceService::addPaymentPlan($invoiceId, true, $creditCardId, $merchantaccount_id, 3, 3, $amountOwed, date('Ymd') . 'T00:00:00', date('Ymd') . 'T00:00:00', 0, 0);
-                    date_default_timezone_set($original_time_zone);
-                    $orderInfo = Infusionsoft_InvoiceService::getOrderId($invoiceId);
-                    $orderId = $orderInfo['orderId'];
-                    $pass_along_params['addnOrderId'] = $orderId;
+                        $amountOwed = Infusionsoft_InvoiceService::calculateAmountOwed($invoiceId);
+                        Infusionsoft_InvoiceService::addPaymentPlan($invoiceId, true, $creditCardId, $merchantaccount_id, 3, 3, $amountOwed, date('Ymd') . 'T00:00:00', date('Ymd') . 'T00:00:00', 0, 0);
+                        date_default_timezone_set($original_time_zone);
+                        $orderInfo = Infusionsoft_InvoiceService::getOrderId($invoiceId);
+                        $orderId = $orderInfo['orderId'];
+                        $pass_along_params['addnOrderId'] = $orderId;
 
-                    $order = new Infusionsoft_Job($orderId);
-                    $order->save();
+                        $order = new Infusionsoft_Job($orderId);
+                        $order->save();
+                    } else {
+                        // Subscriptions
+
+                        $subscriptionPlan = new Infusionsoft_SubscriptionPlan($subscription_id);
+                        $subscriptionId = Infusionsoft_InvoiceService::addRecurringOrder($contact_id, false, $subscriptionPlan->Id, 1, $subscriptionPlan->PlanPrice, false, $merchantaccount_id, $creditCardId, 0, 0);
+                        $invoiceId = Infusionsoft_InvoiceService::createInvoiceForRecurring($subscriptionId);
+
+                        $orderInfo = Infusionsoft_InvoiceService::getOrderId($invoiceId);
+                        $orderId = $orderInfo['orderId'];
+                        $pass_along_params['addnOrderId'] = $orderId;
+                    }
 
                     $result = Infusionsoft_InvoiceService::chargeInvoice($invoiceId, "Upsell Payment", $creditCardId, $merchantaccount_id, false);
+
                     if($result['Successful'] == true){
                         if(!empty($_POST['action_set_id'])){
                             Infusionsoft_ContactService::runActionSequence($contact->Id, $_POST['action_set_id']);
                         }
                     } else {
                         $error = true;
+                        $message = 'Payment failed';
                     }
                 } else {
                     $error = true;
@@ -878,7 +1010,13 @@ CSS;
                 header('Location: ' . $failure_url . '?msg=' . urlencode('Order or Subscription do not belong to specified contact.'));
             }
         } catch (Exception $e) {
-            header('Location: ' . $failure_url . '?msg=Exception Caught');
+            $msg = 'Exception Caught';
+
+            if(stripos($e->getMessage, 'duplicate order') !== 0){
+                $msg = 'Duplicate order';
+            }
+
+            header('Location: ' . $failure_url . '?msg=' . urlencode($msg));
         }
     }
 
@@ -904,7 +1042,13 @@ CSS;
                 product_id: {
                     name: 'Product ID',
                     defaultvalue: '',
-                    description: 'REQUIRED: The ID for the product you are offering with your upsell.',
+                    description: 'The ID for the product you are offering with your upsell.',
+                    type: 'text'
+                },
+                subscription_id: {
+                    name: 'Subscription ID',
+                    defaultvalue: '',
+                    description: 'The ID for the subscription you are offering with your upsell.',
                     type: 'text'
                 },
                 success_url: {
