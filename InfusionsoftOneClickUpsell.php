@@ -915,7 +915,7 @@ CSS;
         }
 
         if(empty($type)) {
-            header('Location: ' . $failure_url . '?msg=' . urlencode('Missing product_id and subscription_id.'));
+            header('Location: ' . $this->addParamsToUrl($failure_url, array('msg' => 'Missing product_id and subscription_id.')));
         }
 
         $error = false;
@@ -1004,19 +1004,19 @@ CSS;
                 if (!$error) {
                     header('Location: ' . $this->addParamsToUrl($success_url, $pass_along_params));
                 } else{
-                    header('Location: ' . $failure_url . '?msg=' . urlencode($message));
+                    header('Location: ' . $this->addParamsToUrl($failure_url, array('msg' => $message)));
                 }
             } else {
-                header('Location: ' . $failure_url . '?msg=' . urlencode('Order or Subscription do not belong to specified contact.'));
+                header('Location: ' . $this->addParamsToUrl($failure_url, array('msg' => 'Order or Subscription do not belong to specified contact.')));
             }
         } catch (Exception $e) {
             $msg = 'Exception Caught';
 
-            if(stripos($e->getMessage, 'duplicate order') !== 0){
+            if(stripos($e->getMessage, 'duplicate order') !== false){
                 $msg = 'Duplicate order';
             }
 
-            header('Location: ' . $failure_url . '?msg=' . urlencode($msg));
+            header('Location: ' . $this->addParamsToUrl($failure_url, array('msg' => $msg)));
         }
     }
 
