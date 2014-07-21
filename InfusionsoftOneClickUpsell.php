@@ -229,7 +229,7 @@ CSS;
     public function hasSDK()
     {
         if(
-            is_plugin_active( 'infusionsoft-sdk/infusionsoft-sdk.php' ) &&
+            class_exists( 'Infusionsoft_Classloader' ) &&
             get_option('infusionsoft_sdk_app_name') &&
             get_option('infusionsoft_sdk_api_key')
         ){
