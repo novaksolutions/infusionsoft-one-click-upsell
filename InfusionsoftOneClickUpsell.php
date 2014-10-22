@@ -131,8 +131,8 @@ class InfusionsoftOneClickUpsell
     display: block;
     text-align: center;
     cursor: pointer;
-    width: {$attributes['image_width']}px;
-    height: {$attributes['image_height']}px;
+    width: {$attributes['image_width']}px !important;
+    height: {$attributes['image_height']}px !important;
     border: 0;
 }
 </style>

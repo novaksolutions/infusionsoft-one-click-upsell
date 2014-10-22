@@ -5,7 +5,7 @@ Author URI: http://novaksolutions.com/
 Plugin URI: http://novaksolutions.com/wordpress-plugins/infusionsoft-one-click-upsell/
 Requires at least: 2.7
 Tested up to: 4.0
-Stable tag: 2.2.3
+Stable tag: 2.2.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -34,6 +34,9 @@ Yes, you will need to provide your Infusionsoft API key.
 5. The upsell shows up as a button on your post or page.
 
 == Changelog ==
+
+= 2.2.4 =
+* Added !important to width/height CSS to fix problem with some themes.
 
 = 2.2.3 =
 * Fixed improper use of is_plugin_active
