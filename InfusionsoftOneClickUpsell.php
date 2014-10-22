@@ -168,7 +168,7 @@ CSS;
         $output .= $test ? 'ActionSetId:' : '';
         $output .= '<input type="' . ($test ? 'text' : 'hidden') . '" name="action_set_id" value="' . htmlentities($attributes['action_set_id']) . '"> ' . ($test ? '<br />' : '');
 
-        $output .= '<input type="submit" onclick="this.disabled=true; this.form.submit(); return false;" value="' . htmlentities($attributes['button_text']) . '"';
+        $output .= '<input type="'.get_option('novaksolutions_upsell_button_type', 'submit').'" onclick="this.disabled=true; this.form.submit(); return false;" value="' . htmlentities($attributes['button_text']) . '"';
 
         if($attributes['class']) {
             $output .= ' class="ns-one-click-upsell-button'.$checksum.' ' . htmlentities($attributes['class']) . '"';
@@ -292,6 +292,13 @@ CSS;
             'novaksolutions-upsell-settings'
         );
 
+        add_settings_section(
+            'novaksolutions_upsell_setting_section_optional',
+            'Optional Settings',
+            null,
+            'novaksolutions-upsell-settings'
+        );
+
         // Add the settings fields
         add_settings_field(
             'novaksolutions_upsell_merchantaccount_id',
@@ -381,6 +388,14 @@ CSS;
             'novaksolutions_upsell_setting_section_defaults'
         );
 
+        add_settings_field(
+            'novaksolutions_upsell_button_type',
+            'Button Type',
+            array($this, 'fieldButtonType'),
+            'novaksolutions-upsell-settings',
+            'novaksolutions_upsell_setting_section_optional'
+        );
+
         // Register our setting
         register_setting('novaksolutions-upsell-settings', 'novaksolutions_upsell_merchantaccount_id', array($this, 'callbackSanitizeAbsint'));
         register_setting('novaksolutions-upsell-settings', 'novaksolutions_upsell_test_merchantaccount_id', array($this, 'callbackSanitizeAbsint'));
@@ -395,6 +410,8 @@ CSS;
         register_setting('novaksolutions-upsell-settings', 'novaksolutions_upsell_default_image', 'esc_url');
         register_setting('novaksolutions-upsell-settings', 'novaksolutions_upsell_default_image_width', array($this, 'callbackSanitizeAbsint'));
         register_setting('novaksolutions-upsell-settings', 'novaksolutions_upsell_default_image_height', array($this, 'callbackSanitizeAbsint'));
+
+        register_setting('novaksolutions-upsell-settings', 'novaksolutions_upsell_button_type', array($this, 'callbackSanitizeButtonType'));
 
         // Load MCE plugins
         if ( current_user_can( 'edit_posts' ) && current_user_can( 'edit_pages' ) ) {
@@ -529,6 +546,23 @@ CSS;
     }
 
     /**
+     * Display button type field
+     */
+    public function fieldButtonType()
+    {
+        $allowed = array('submit', 'button');
+
+        echo '<select name="novaksolutions_upsell_button_type">';
+        foreach($allowed as $type) {
+            echo '<option';
+            if(get_option('novaksolutions_upsell_button_type') == $type) echo ' selected="selected"';
+            echo '>' . $type . '</option>';
+        }
+        echo '</select><br />';
+        echo '<span class="description">You can specify which type of button you would like to use, in case your theme doesn\'t work well with submit buttons.</span>';
+    }
+
+    /**
      * Get the absolute value of an attribute.
      *
      * @param string $value
@@ -538,6 +572,19 @@ CSS;
     {
         $value = absint($value);
         return $value === 0 ? '' : $value;
+    }
+
+    /**
+     * Make sure the selected button type is valid
+     *
+     * @param string $value
+     * @return string
+     */
+    public function callbackSanitizeButtonType($value)
+    {
+        $allowed = array('submit', 'button');
+
+        return (in_array($value, $allowed)) ? $value : 'submit';
     }
 
     /**

@@ -37,6 +37,7 @@ Yes, you will need to provide your Infusionsoft API key.
 
 = 2.2.4 =
 * Added !important to width/height CSS to fix problem with some themes.
+* Now allows you to use input type of submit or button.
 
 = 2.2.3 =
 * Fixed improper use of is_plugin_active
